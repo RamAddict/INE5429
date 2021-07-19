@@ -7,10 +7,15 @@ import (
 )
 
 /*
-// @param
-    p and q are primes that should both be congruent to 3 (mod 4)
+// Param
+    pa and qa are primes that should both be congruent to 3 (mod 4)
+	seed is any random number such that mdc(p*q, seed) = 1
+	nBits is the size in bits of the output number
+// Return
+	the random number
 */
-func blumblumshub(pa int64, qa int64, seed int64, nBits uint) *big.Int {
+func blumblumshub(pa int64, qa int64, 
+				  seed int64, nBits uint) *big.Int {
 
 	p := big.NewInt(pa)
 	q := big.NewInt(qa)
@@ -24,7 +29,6 @@ func blumblumshub(pa int64, qa int64, seed int64, nBits uint) *big.Int {
 		mod2.Mod(xn, big.NewInt(2))
 
 		ret = mod2.Or(ret, (mod2.Lsh(mod2, i)))
-
 	}
 	return ret
 }
@@ -142,7 +146,6 @@ func fermatTest(possiblePrime *big.Int, attempts uint) bool {
     pMinus1 := big.NewInt(0).Sub(possiblePrime, big.NewInt(1))
 
 	for i := uint(0); i != attempts; i++ {
-        // fmt.Printf("i: %v\n", i)
 		// generate a random number which is less than p
 		a := xorshift32by32(20)
 		for {
