@@ -86,42 +86,54 @@ func eq(a *big.Int, b *big.Int) bool {
 	// +1 if x > y
 }
 
-func millerRabin(nPossiblePrime *big.Int, attempts uint) bool {
+func  millerRabin(nPossiblePrime *big.Int, attempts uint) bool {
 
+	// if even, stop
     if eq(big.NewInt(0).Mod(nPossiblePrime, big.NewInt(2)), big.NewInt(0)) {
         return false
     }
-
-    nMinus1 := big.NewInt(0).Sub(nPossiblePrime, big.NewInt(1))
-    for i := uint(0); i != attempts; i++ {
-        a := xorshift32by32(32)
-        // filter out mod 2s
-        if eq(big.NewInt(0).Mod(a, big.NewInt(2)), big.NewInt(0)) {
-            // fmt.Printf("ignoring a: %v\n", a)
-            continue
-        }
-        // fermats little theorem
-        // a^(n-1) == 1 mod n
-        m := big.NewInt(0).Exp(a, nMinus1, nPossiblePrime)
-        if eq(m, big.NewInt(1)) {
-            return true
-        }
-
-        t := nMinus1
-        for {
-            if !eq(big.NewInt(0).Mod(t, big.NewInt(2)), big.NewInt(0)) {
-                break
-            }
-            t.Rsh(t, 1)
-            m.Exp(a, t, nPossiblePrime)
-            if eq(m, nMinus1) {
-                continue
-            }
-            if !eq(m, big.NewInt(1)) {
-                return false
-            }
-        }
+	// obviously prime
+	if eq(nPossiblePrime, big.NewInt(2)) || eq(nPossiblePrime, big.NewInt(3)) || eq(nPossiblePrime, big.NewInt(5)){
+        return true
     }
+	// n -1
+	// FORCE COPY
+	nMinus1 := big.NewInt(0).Sub(nPossiblePrime, big.NewInt(1))
+
+	t := big.NewInt(0).Add(nMinus1, big.NewInt(0))
+	s := 0
+	for {
+		// if odd, stop
+		if !eq(big.NewInt(0).Mod(t, big.NewInt(2)), big.NewInt(0)) {
+			break
+		}
+		// increment max exp that divides 
+		s++
+		// divide by 2
+		t.Rsh(t, 1)
+	}
+
+	witnessLoop: for i := uint(0); i != attempts; i++ {
+		a := xorshift32by32(20)
+		x := big.NewInt(0).Exp(a, t, nPossiblePrime)
+		if eq(x, nMinus1) || eq(x, big.NewInt(1)) {
+			// result is good, continue
+			continue witnessLoop
+		}
+		didStop := false
+		for i := 0; i < (s-1); i++ {
+			x.Exp(x, big.NewInt(2), nPossiblePrime)
+			if eq(x, nMinus1) {
+				// result is good, continue
+				didStop = true
+				break
+			}
+		}
+		if !didStop {
+			return false
+		}
+	}
+	
     return true
 }
 
@@ -132,12 +144,12 @@ func fermatTest(possiblePrime *big.Int, attempts uint) bool {
 	for i := uint(0); i != attempts; i++ {
         // fmt.Printf("i: %v\n", i)
 		// generate a random number which is less than p
-		a := xorshift32by32(32)
+		a := xorshift32by32(20)
 		for {
 			if lt(a, possiblePrime) {
 				break
 			} else {
-				a = xorshift32by32(32)
+				a = xorshift32by32(20)
 			}
 		}
 		gcd := big.NewInt(0)
@@ -158,14 +170,14 @@ func fermatTest(possiblePrime *big.Int, attempts uint) bool {
 
 func main() {
 	fmt.Println("begin")
-	for i := uint(1); i != 1000; i++ {
+	for i := uint(0); i != 1000; i++ {
 		potentialPrime := xorshift32by32(256)
 		if fermatTest(potentialPrime, 20) {
             fmt.Printf("fermatTest says %v  is prime!\n", potentialPrime)
         }
         fmt.Printf("i: %v\n", i)
         a := xorshift32by32(256)
-        if millerRabin(a, 100) {
+        if millerRabin(a, 20) {
             fmt.Printf("Miller Rabin says %v is prime\n", a)
         }
     }
