@@ -123,9 +123,9 @@ func  millerRabin(nPossiblePrime *big.Int, attempts uint) bool {
         return true
     }
 	// n -1
-	// FORCE COPY
 	nMinus1 := big.NewInt(0).Sub(nPossiblePrime, big.NewInt(1))
-
+	
+	// FORCE COPY
 	t := big.NewInt(0).Add(nMinus1, big.NewInt(0))
 	s := 0
 	for {
@@ -139,12 +139,12 @@ func  millerRabin(nPossiblePrime *big.Int, attempts uint) bool {
 		t.Rsh(t, 1)
 	}
 
-	witnessLoop: for i := uint(0); i != attempts; i++ {
-		a := xorshift32by32(20)
+	for i := uint(0); i != attempts; i++ {
+		a := xorshift32by32(nPossiblePrime.BitLen()/2)
 		x := big.NewInt(0).Exp(a, t, nPossiblePrime)
 		if eq(x, nMinus1) || eq(x, big.NewInt(1)) {
 			// result is good, continue
-			continue witnessLoop
+			continue
 		}
 		didStop := false
 		for i := 0; i < (s-1); i++ {
@@ -202,7 +202,7 @@ func fermatTest(possiblePrime *big.Int, attempts uint) bool {
 
 func main() {
 	fmt.Println("begin")
-	for i := uint(0); i != 1000; i++ {
+	for i := uint(0); i != 5; i++ {
 		potentialPrime := xorshift32by32(256)
 		if fermatTest(potentialPrime, 20) {
             fmt.Printf("fermatTest says %v  is prime!\n", potentialPrime)
@@ -242,10 +242,12 @@ func main() {
 	    }
 	    fmt.Printf("blum blum shub ,%v ,%v \n",size, (avgTime/500))
 	}
+
+	bitSizeArray = []int {40, 56, 80, 128, 168, 224, 256, 512, 1024}
 	
 	for _, size := range bitSizeArray {
 	    var avgTime time.Duration = 0
-	    for i := 0; i != 1; i++ {
+	    for i := 0; i != 5; i++ {
 	        potentialPrime := xorshift32by32(size)
 			start := time.Now()
 	        if millerRabin(potentialPrime, 20) {
